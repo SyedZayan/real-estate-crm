@@ -1,4 +1,4 @@
-const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType } = require('docx');
+const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType } = require('docx');
 const fs = require('fs');
 const path = require('path');
 
@@ -25,7 +25,7 @@ const doc = new Document({
       properties: {},
       children: [
         new Paragraph({
-          text: 'EstateFlow CRM: Step-by-Step User Journey and Operations Guide',
+          text: 'NestCRM: Step-by-Step User Journey and Operations Guide',
           heading: HeadingLevel.TITLE,
           spacing: { after: 140 },
         }),
@@ -45,12 +45,60 @@ const doc = new Document({
         }),
 
         new Paragraph({
-          text: '1. User Roles and Access Rights',
+          text: '1. Default Team Credentials to Access the CRM',
           heading: HeadingLevel.HEADING_1,
           spacing: { before: 240, after: 140 },
         }),
         new Paragraph({
-          text: 'EstateFlow uses Role-Based Access Control (RBAC) to ensure sales agents can work productively on their assigned clients without distraction, while sales directors maintain full visibility and catalog control across the organization.',
+          text: 'Use these pre-configured team accounts to log in directly on the /login screen. All accounts have access to the initial portfolio of luxury towers, units, and active customer pipeline leads.',
+          spacing: { after: 180 },
+        }),
+
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          rows: [
+            new TableRow({
+              children: [
+                createCell('Role', true),
+                createCell('Consultant Name', true),
+                createCell('Username (Email)', true),
+                createCell('Password', true),
+              ],
+            }),
+            new TableRow({
+              children: [
+                createCell('Sales Director (Admin)'),
+                createCell('Sarah Connor'),
+                createCell('admin@realstate.com'),
+                createCell('nestcrm2026'),
+              ],
+            }),
+            new TableRow({
+              children: [
+                createCell('Senior Sales Rep'),
+                createCell('John Doe'),
+                createCell('john.doe@realstate.com'),
+                createCell('nestcrm2026'),
+              ],
+            }),
+            new TableRow({
+              children: [
+                createCell('Property Consultant'),
+                createCell('Rachel Green'),
+                createCell('rachel.green@realstate.com'),
+                createCell('nestcrm2026'),
+              ],
+            }),
+          ],
+        }),
+
+        new Paragraph({
+          text: '2. User Roles and Access Rights',
+          heading: HeadingLevel.HEADING_1,
+          spacing: { before: 320, after: 140 },
+        }),
+        new Paragraph({
+          text: 'NestCRM uses Role-Based Access Control (RBAC) to ensure sales agents can work productively on their assigned clients without distraction, while sales directors maintain full visibility and catalog control across the organization.',
           spacing: { after: 180 },
         }),
 
@@ -117,7 +165,7 @@ const doc = new Document({
         }),
 
         new Paragraph({
-          text: '2. Complete Step-by-Step User Journey',
+          text: '3. Complete Step-by-Step User Journey',
           heading: HeadingLevel.HEADING_1,
           spacing: { before: 320, after: 140 },
         }),
@@ -130,19 +178,19 @@ const doc = new Document({
         new Paragraph({
           children: [
             new TextRun({ text: '• How the user starts: ', bold: true }),
-            new TextRun('The user visits the dedicated login page.'),
+            new TextRun('The user visits the dedicated login page at /login.'),
           ],
         }),
         new Paragraph({
           children: [
             new TextRun({ text: '• What they see: ', bold: true }),
-            new TextRun('A clean dual-pane screen with the EstateFlow architectural brand logo, value cards, and a Sign In / Sign Up tabbed form.'),
+            new TextRun('A clean dual-pane screen with the NestCRM architectural brand logo, value cards, and a Sign In / Sign Up tabbed form.'),
           ],
         }),
         new Paragraph({
           children: [
             new TextRun({ text: '• User Action: ', bold: true }),
-            new TextRun('The user enters their registered work email and password, then clicks Sign In to Workspace. New consultants click the Sign Up tab, provide their full name, email, phone number, choose their role (Sales Rep or Director), and set a password.'),
+            new TextRun('The user enters their registered work email (e.g. admin@realstate.com or john.doe@realstate.com) and password (nestcrm2026), then clicks Sign In to Workspace. New consultants click the Sign Up tab, provide their full name, email, phone number, choose their role (Sales Rep or Director), and set a password.'),
           ],
         }),
         new Paragraph({
@@ -293,14 +341,14 @@ const doc = new Document({
         }),
 
         new Paragraph({
-          text: '3. Typical Sales Agent Daily Routine',
+          text: '4. Typical Sales Agent Daily Routine',
           heading: HeadingLevel.HEADING_1,
           spacing: { before: 240, after: 140 },
         }),
         new Paragraph({
           children: [
             new TextRun({ text: '• 09:00: ', bold: true }),
-            new TextRun('Log in to EstateFlow and check Follow-Ups Today on the Dashboard Overview to set priority calls.'),
+            new TextRun('Log in to NestCRM with credentials and check Follow-Ups Today on the Dashboard Overview to set priority calls.'),
           ],
         }),
         new Paragraph({
@@ -333,10 +381,10 @@ const doc = new Document({
 });
 
 Packer.toBuffer(doc).then((buffer) => {
-  const targetPath = path.resolve('C:/Users/TC/.gemini/antigravity/brain/1c6d9782-5e64-4cb3-a4cf-bb7a7acc7d8b/EstateFlow_CRM_Portal_Flow_Guide.docx');
-  fs.writeFileSync(targetPath, buffer);
-  console.log('DOCX written to ' + targetPath);
-  const workspacePath = path.resolve('EstateFlow_CRM_Portal_Flow_Guide.docx');
+  const artifactPath = path.resolve('C:/Users/TC/.gemini/antigravity/brain/1c6d9782-5e64-4cb3-a4cf-bb7a7acc7d8b/NestCRM_User_Journey_Guide.docx');
+  fs.writeFileSync(artifactPath, buffer);
+  console.log('DOCX written to ' + artifactPath);
+  const workspacePath = path.resolve('NestCRM_User_Journey_Guide.docx');
   fs.writeFileSync(workspacePath, buffer);
   console.log('DOCX written to ' + workspacePath);
 });
