@@ -40,7 +40,6 @@ export default function LoginPage() {
   const [signUpFullName, setSignUpFullName] = useState('');
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPhone, setSignUpPhone] = useState('');
-  const [signUpRole, setSignUpRole] = useState<'admin' | 'sales_rep'>('sales_rep');
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
@@ -106,18 +105,17 @@ export default function LoginPage() {
         fullName: signUpFullName.trim(),
         email: signUpEmail.trim(),
         password: signUpPassword,
-        role: signUpRole,
         phone: signUpPhone.trim() || undefined,
       });
 
       if (result.requiresEmailConfirmation) {
-        toast.success('Account created! Please check your email to verify your address.', {
+        toast.success('Account registered! Please verify your email. An administrator will assign your workspace role.', {
           duration: 6000,
         });
         setMode('signin');
         setSignInEmail(signUpEmail.trim());
       } else {
-        toast.success(`Welcome to NestCRM, ${result.user.full_name}!`);
+        toast.info('Account registered! An administrator must assign your role before full access is granted.');
         router.push('/');
       }
     } catch (err: unknown) {
@@ -332,50 +330,20 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="signup-phone" className="text-xs font-medium text-foreground">
-                    Phone (Optional)
-                  </Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-phone"
-                      type="tel"
-                      value={signUpPhone}
-                      onChange={(e) => setSignUpPhone(e.target.value)}
-                      placeholder="+1 (555) 000-0000"
-                      className="pl-9 h-10 text-sm bg-card rounded-xl border-border"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-foreground">Account Role</Label>
-                  <div className="grid grid-cols-2 gap-1.5 pt-0.5">
-                    <button
-                      type="button"
-                      onClick={() => setSignUpRole('sales_rep')}
-                      className={`h-9 text-xs font-medium rounded-lg border flex items-center justify-center transition cursor-pointer ${
-                        signUpRole === 'sales_rep'
-                          ? 'border-primary bg-primary/10 text-primary font-semibold'
-                          : 'border-border text-muted-foreground hover:bg-muted'
-                      }`}
-                    >
-                      Sales Rep
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSignUpRole('admin')}
-                      className={`h-9 text-xs font-medium rounded-lg border flex items-center justify-center transition cursor-pointer ${
-                        signUpRole === 'admin'
-                          ? 'border-primary bg-primary/10 text-primary font-semibold'
-                          : 'border-border text-muted-foreground hover:bg-muted'
-                      }`}
-                    >
-                      Director
-                    </button>
-                  </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-phone" className="text-xs font-medium text-foreground">
+                  Phone / Mobile (Optional)
+                </Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="signup-phone"
+                    type="tel"
+                    value={signUpPhone}
+                    onChange={(e) => setSignUpPhone(e.target.value)}
+                    placeholder="+1 (555) 000-0000"
+                    className="pl-9 h-10 text-sm bg-card rounded-xl border-border"
+                  />
                 </div>
               </div>
 

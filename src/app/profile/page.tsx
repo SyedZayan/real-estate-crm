@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { crmService } from '@/lib/crm-service';
-import { Profile, Lead, Booking } from '@/lib/types/crm';
+import { Profile, Lead, Booking, UserRole } from '@/lib/types/crm';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,10 @@ import {
   Building2,
   Briefcase,
   Calendar,
+  Users,
+  UserCheck,
+  Clock,
+  ShieldAlert,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -40,6 +44,8 @@ export default function ProfilePage() {
   const [customAvatarInput, setCustomAvatarInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState({ assignedLeads: 0, closedBookings: 0 });
+  const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
+  const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
 
   useEffect(() => {
     loadUser();
@@ -64,6 +70,25 @@ export default function ProfilePage() {
       assignedLeads: allLeads.filter((l) => l.assigned_to === user.id).length,
       closedBookings: allBookings.filter((b) => b.booked_by === user.id).length,
     });
+
+    if (user.role === 'admin') {
+      const profiles = await crmService.getAllProfiles();
+      setAllProfiles(profiles);
+    }
+  };
+
+  const handleRoleChange = async (targetUserId: string, newRole: UserRole) => {
+    try {
+      setUpdatingRoleUserId(targetUserId);
+      await crmService.updateUserRole(targetUserId, newRole);
+      const profiles = await crmService.getAllProfiles();
+      setAllProfiles(profiles);
+      toast.success(`Role updated successfully to ${newRole === 'sales_rep' ? 'Sales Representative' : newRole === 'admin' ? 'Administrator' : 'Pending Approval'}.`);
+    } catch {
+      toast.error('Failed to update user role.');
+    } finally {
+      setUpdatingRoleUserId(null);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -330,6 +355,134 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Admin Team & Role Approvals Section */}
+        {currentUser.role === 'admin' && (
+          <Card className="shadow-2xs border-border/80">
+            <CardHeader className="pb-3 border-b border-border/60">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <Users className="h-4 w-4 text-[#005163]" />
+                    Team Member Management & Role Approvals
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
+                    Review newly registered team members, approve pending access, or change permissions.
+                  </CardDescription>
+                </div>
+                <Badge variant="outline" className="w-fit text-xs font-medium bg-muted/40">
+                  {allProfiles.length} Total Users
+                </Badge>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-border/60 bg-muted/30 text-muted-foreground font-semibold">
+                      <th className="py-2.5 px-4">User</th>
+                      <th className="py-2.5 px-4 hidden md:table-cell">Contact</th>
+                      <th className="py-2.5 px-4">Current Status</th>
+                      <th className="py-2.5 px-4 text-right">Assign Access Role</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    {allProfiles.map((p) => {
+                      const isSelf = p.id === currentUser.id;
+                      const isPending = p.role === 'pending';
+                      const isBusy = updatingRoleUserId === p.id;
+
+                      return (
+                        <tr key={p.id} className="hover:bg-muted/10 transition-colors">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8 rounded-full border border-border/60 shrink-0">
+                                <AvatarImage src={p.avatar_url || undefined} />
+                                <AvatarFallback className="text-[11px] font-bold bg-[#005163]/10 text-[#005163]">
+                                  {p.full_name?.substring(0, 2).toUpperCase() || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <div className="font-semibold text-foreground truncate flex items-center gap-1.5">
+                                  {p.full_name || 'Unnamed User'}
+                                  {isSelf && (
+                                    <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.2 rounded font-normal">
+                                      You
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-muted-foreground truncate">{p.email}</div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">
+                            {p.phone || 'No phone'}
+                          </td>
+
+                          <td className="py-3 px-4">
+                            {isPending ? (
+                              <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 font-medium text-[11px] gap-1">
+                                <Clock className="h-3 w-3" />
+                                Pending Approval
+                              </Badge>
+                            ) : p.role === 'admin' ? (
+                              <Badge className="bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30 font-medium text-[11px] gap-1">
+                                <Shield className="h-3 w-3" />
+                                Administrator
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-[#005163]/10 text-[#005163] dark:text-[#5ce1e6] border-[#005163]/30 font-medium text-[11px] gap-1">
+                                <UserCheck className="h-3 w-3" />
+                                Sales Rep
+                              </Badge>
+                            )}
+                          </td>
+
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                              <Button
+                                size="sm"
+                                variant={p.role === 'sales_rep' ? 'secondary' : 'outline'}
+                                disabled={isBusy || (isSelf && p.role === 'admin')}
+                                onClick={() => handleRoleChange(p.id, 'sales_rep')}
+                                className="h-7 text-[11px] px-2.5 font-medium"
+                              >
+                                Sales Rep
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={p.role === 'admin' ? 'secondary' : 'outline'}
+                                disabled={isBusy}
+                                onClick={() => handleRoleChange(p.id, 'admin')}
+                                className="h-7 text-[11px] px-2.5 font-medium"
+                              >
+                                Admin
+                              </Button>
+                              {!isSelf && p.role !== 'pending' && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  disabled={isBusy}
+                                  onClick={() => handleRoleChange(p.id, 'pending')}
+                                  className="h-7 text-[11px] px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                  title="Revoke access and set to pending"
+                                >
+                                  Revoke
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardShell>
   );

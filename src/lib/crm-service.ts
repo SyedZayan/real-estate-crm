@@ -8,6 +8,7 @@ import {
   LeadNote,
   Profile,
   DashboardMetrics,
+  UserRole,
 } from './types/crm';
 import {
   INITIAL_PROFILES,
@@ -203,12 +204,13 @@ export const crmService = {
     email: string;
     password: string;
     fullName: string;
-    role?: 'admin' | 'sales_rep';
+    role?: 'admin' | 'sales_rep' | 'pending';
     phone?: string;
   }): Promise<{ user: Profile; requiresEmailConfirmation?: boolean }> {
     const cleanEmail = params.email.toLowerCase().trim();
     const cleanName = params.fullName.trim();
-    const role = params.role || 'sales_rep';
+    // Newly registered users default to 'pending' until an administrator assigns a role
+    const role: UserRole = params.role || 'pending';
     const supabase = createClient();
 
     if (supabase) {
@@ -248,10 +250,8 @@ export const crmService = {
         crmStore.profiles.push(newUser);
       }
 
-      if (!requiresConfirmation) {
-        crmStore.currentUserId = newUser.id;
-        crmStore.isAuthenticated = true;
-      }
+      crmStore.currentUserId = newUser.id;
+      crmStore.isAuthenticated = true;
       crmStore.persist();
 
       if (isBrowser()) {
@@ -265,7 +265,7 @@ export const crmService = {
       };
     }
 
-    // Direct / mock registration (creates real active profile in CRM store)
+    // Direct registration (creates active profile with 'pending' role until admin approves)
     const existing = crmStore.profiles.find((p) => p.email.toLowerCase() === cleanEmail);
     if (existing) {
       throw new Error('An account with this email already exists. Please sign in instead.');
@@ -328,6 +328,41 @@ export const crmService = {
       return user;
     }
     return crmStore.profiles[0];
+  },
+
+  async updateUserRole(userId: string, newRole: UserRole): Promise<Profile> {
+    const supabase = createClient();
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ role: newRole, updated_at: new Date().toISOString() })
+        .eq('id', userId)
+        .select()
+        .single();
+      if (!error && data) {
+        const idx = crmStore.profiles.findIndex((p) => p.id === userId);
+        if (idx >= 0) {
+          crmStore.profiles[idx] = data as Profile;
+          crmStore.persist();
+        }
+        if (isBrowser()) {
+          window.dispatchEvent(new Event('crm-user-changed'));
+        }
+        return data as Profile;
+      }
+    }
+
+    const idx = crmStore.profiles.findIndex((p) => p.id === userId);
+    if (idx >= 0) {
+      crmStore.profiles[idx].role = newRole;
+      crmStore.profiles[idx].updated_at = new Date().toISOString();
+      crmStore.persist();
+      if (isBrowser()) {
+        window.dispatchEvent(new Event('crm-user-changed'));
+      }
+      return crmStore.profiles[idx];
+    }
+    throw new Error('User profile not found');
   },
 
   getAllProfiles(): Profile[] {
