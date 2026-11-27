@@ -43,9 +43,12 @@ export default function LeadsPage() {
 
   useEffect(() => {
     loadLeads();
-    setProfiles(crmService.getAllProfiles());
+    crmService.getAllProfiles().then((p) => setProfiles(p));
 
-    const handleUserChange = () => loadLeads();
+    const handleUserChange = () => {
+      loadLeads();
+      crmService.getAllProfiles().then((p) => setProfiles(p));
+    };
     window.addEventListener('crm-user-changed', handleUserChange);
     window.addEventListener('crm-data-reset', handleUserChange);
     return () => {

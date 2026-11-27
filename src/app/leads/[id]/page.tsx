@@ -45,7 +45,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
 
   useEffect(() => {
     loadLeadData();
-    setProfiles(crmService.getAllProfiles());
+    crmService.getAllProfiles().then((p) => setProfiles(p));
   }, [leadId]);
 
   const loadLeadData = async () => {

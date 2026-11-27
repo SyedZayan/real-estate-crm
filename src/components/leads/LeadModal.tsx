@@ -46,10 +46,11 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
 
   useEffect(() => {
     if (isOpen) {
-      const allProfiles = crmService.getAllProfiles();
-      setProfiles(allProfiles);
-      const defaultRep = allProfiles.find((p) => p.role === 'sales_rep') || allProfiles[0];
-      if (defaultRep) setAssignedTo(defaultRep.id);
+      crmService.getAllProfiles().then((allProfiles) => {
+        setProfiles(allProfiles);
+        const defaultRep = allProfiles.find((p) => p.role === 'sales_rep') || allProfiles[0];
+        if (defaultRep) setAssignedTo(defaultRep.id);
+      });
     }
   }, [isOpen]);
 

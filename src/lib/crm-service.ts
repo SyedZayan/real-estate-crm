@@ -179,15 +179,53 @@ export const crmService = {
     }
 
     // Direct / mock credential authentication
-    let user = crmStore.profiles.find((p) => p.email.toLowerCase() === cleanEmail);
-    if (!user) {
-      throw new Error('No account found with this email. Please check your credentials or create a new account.');
+    // First attempt cross-browser server verification
+    if (isBrowser()) {
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'login', email: cleanEmail, password }),
+        });
+        const data = await res.json();
+        if (res.ok && data?.user) {
+          const user: Profile = data.user;
+          const idx = crmStore.profiles.findIndex((p) => p.email.toLowerCase() === cleanEmail);
+          if (idx >= 0) {
+            crmStore.profiles[idx] = user;
+          } else {
+            crmStore.profiles.push(user);
+          }
+          crmStore.currentUserId = user.id;
+          crmStore.isAuthenticated = true;
+          crmStore.persist();
+          window.dispatchEvent(new Event('crm-auth-changed'));
+          window.dispatchEvent(new Event('crm-user-changed'));
+          return user;
+        } else if (res.status === 401) {
+          throw new Error('Incorrect email or password. Please verify your credentials and try again.');
+        }
+      } catch (e: unknown) {
+        if (e instanceof Error && e.message.includes('Incorrect email or password')) {
+          throw e;
+        }
+        // Fall back to local store if offline
+      }
     }
 
-    // Default password check for initial team accounts
+    let user = crmStore.profiles.find((p) => p.email.toLowerCase() === cleanEmail);
+    if (!user) {
+      throw new Error('Incorrect email or password. Please verify your credentials and try again.');
+    }
+
+    // Default password check for initial team accounts and registered accounts
     const validDefaultPasswords = ['nestcrm2026', 'estateflow2026', 'admin123', 'password', 'password123'];
-    if (password && !validDefaultPasswords.includes(password.trim())) {
-      throw new Error('Invalid password for this account. Please verify your credentials.');
+    const storedPassword = (user as unknown as { password?: string }).password;
+    const isStoredPasswordMatch = storedPassword && storedPassword === password;
+    const isDefaultPasswordMatch = password && validDefaultPasswords.includes(password.trim());
+
+    if (!isStoredPasswordMatch && !isDefaultPasswordMatch) {
+      throw new Error('Incorrect email or password. Please verify your credentials and try again.');
     }
 
     crmStore.currentUserId = user.id;
@@ -266,6 +304,48 @@ export const crmService = {
     }
 
     // Direct registration (creates active profile with 'pending' role until admin approves)
+    if (isBrowser()) {
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'register',
+            email: cleanEmail,
+            password: params.password,
+            fullName: cleanName,
+            phone: params.phone || '',
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data?.user) {
+          const newUser: Profile = data.user;
+          const idx = crmStore.profiles.findIndex((p) => p.email.toLowerCase() === cleanEmail);
+          if (idx >= 0) {
+            crmStore.profiles[idx] = newUser;
+          } else {
+            crmStore.profiles.push(newUser);
+          }
+          crmStore.currentUserId = newUser.id;
+          crmStore.isAuthenticated = true;
+          crmStore.persist();
+          window.dispatchEvent(new Event('crm-auth-changed'));
+          window.dispatchEvent(new Event('crm-user-changed'));
+          return {
+            user: newUser,
+            requiresEmailConfirmation: false,
+          };
+        } else if (data?.error) {
+          throw new Error(data.error);
+        }
+      } catch (e: unknown) {
+        if (e instanceof Error && e.message.includes('already exists')) {
+          throw e;
+        }
+        // Fall back to local store
+      }
+    }
+
     const existing = crmStore.profiles.find((p) => p.email.toLowerCase() === cleanEmail);
     if (existing) {
       throw new Error('An account with this email already exists. Please sign in instead.');
@@ -331,6 +411,29 @@ export const crmService = {
   },
 
   async updateUserRole(userId: string, newRole: UserRole): Promise<Profile> {
+    if (isBrowser()) {
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update_role', userId, role: newRole }),
+        });
+        const data = await res.json();
+        if (res.ok && data?.user) {
+          const updatedUser: Profile = data.user;
+          const idx = crmStore.profiles.findIndex((p) => p.id === userId);
+          if (idx >= 0) {
+            crmStore.profiles[idx] = updatedUser;
+          }
+          crmStore.persist();
+          window.dispatchEvent(new Event('crm-user-changed'));
+          return updatedUser;
+        }
+      } catch (e) {
+        console.warn('Could not sync role change to server:', e);
+      }
+    }
+
     const supabase = createClient();
     if (supabase) {
       const { data, error } = await supabase
@@ -365,7 +468,29 @@ export const crmService = {
     throw new Error('User profile not found');
   },
 
-  getAllProfiles(): Profile[] {
+  async getAllProfiles(): Promise<Profile[]> {
+    if (isBrowser()) {
+      try {
+        const res = await fetch('/api/users');
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.users && Array.isArray(data.users)) {
+            // Merge with local profiles
+            for (const serverProfile of data.users) {
+              const idx = crmStore.profiles.findIndex((p) => p.id === serverProfile.id);
+              if (idx >= 0) {
+                crmStore.profiles[idx] = { ...crmStore.profiles[idx], ...serverProfile };
+              } else {
+                crmStore.profiles.push(serverProfile);
+              }
+            }
+            crmStore.persist();
+          }
+        }
+      } catch (e) {
+        console.warn('Could not fetch shared users from server:', e);
+      }
+    }
     return crmStore.profiles;
   },
 
