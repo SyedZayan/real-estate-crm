@@ -26,8 +26,11 @@ const poppins = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'EstateFlow | Close more. Manage less.',
-  description: 'Your deals, perfectly organized. Professional real estate CRM for managing leads, properties, and bookings.',
+  title: 'NestCRM | Close more. Manage less.',
+  description: 'Your deals, perfectly organized. Enterprise real estate CRM for managing leads, property inventory, and unit bookings.',
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({

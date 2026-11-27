@@ -57,7 +57,7 @@ export function AppHeader({ title, subtitle, actionButton, onMenuClick }: AppHea
           </div>
         ) : (
           <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
-            <span className="font-semibold text-foreground">EstateFlow</span>
+            <span className="font-semibold text-foreground">NestCRM</span>
             <span>/</span>
             <span className="text-foreground truncate">Workspace</span>
           </div>

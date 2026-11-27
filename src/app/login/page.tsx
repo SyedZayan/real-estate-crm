@@ -3,21 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { crmService } from '@/lib/crm-service';
-import { Profile } from '@/lib/types/crm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { BrandLogo } from '@/components/layout/BrandLogo';
 import {
-  Shield,
-  UserCheck,
   Lock,
   Mail,
   ArrowRight,
   KeyRound,
-  CheckCircle2,
   TrendingUp,
   Layers,
   Building,
@@ -35,7 +30,6 @@ type AuthMode = 'signin' | 'signup';
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>('signin');
-  const [profiles, setProfiles] = useState<Profile[]>([]);
 
   // Sign In fields
   const [signInEmail, setSignInEmail] = useState('');
@@ -52,40 +46,13 @@ export default function LoginPage() {
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
-  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
 
   useEffect(() => {
     // If already logged in, redirect to dashboard
     if (crmService.isAuthenticated()) {
       router.replace('/');
     }
-    const team = crmService.getAllProfiles();
-    setProfiles(team);
-    if (team.length > 0) {
-      setSelectedProfileId(team[0].id);
-      setSignInEmail(team[0].email);
-    }
   }, [router]);
-
-  const handleQuickSelect = (profile: Profile) => {
-    setSelectedProfileId(profile.id);
-    setSignInEmail(profile.email);
-    setSignInPassword('••••••••••••');
-  };
-
-  const handleRoleSignIn = async (profileId: string) => {
-    setLoading(true);
-    try {
-      const user = await crmService.loginWithRole(profileId);
-      toast.success(`Welcome back, ${user.full_name}!`);
-      router.push('/');
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSignInSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,11 +60,15 @@ export default function LoginPage() {
       toast.error('Please enter your email address');
       return;
     }
+    if (!signInPassword) {
+      toast.error('Please enter your password');
+      return;
+    }
     setLoading(true);
     try {
       const user = await crmService.loginWithCredentials(
         signInEmail.trim(),
-        signInPassword ? signInPassword : undefined
+        signInPassword
       );
       toast.success(`Welcome back, ${user.full_name}!`);
       router.push('/');
@@ -146,7 +117,7 @@ export default function LoginPage() {
         setMode('signin');
         setSignInEmail(signUpEmail.trim());
       } else {
-        toast.success(`Welcome to EstateFlow, ${result.user.full_name}!`);
+        toast.success(`Welcome to NestCRM, ${result.user.full_name}!`);
         router.push('/');
       }
     } catch (err: unknown) {
@@ -182,7 +153,7 @@ export default function LoginPage() {
           </h1>
 
           <p className="text-sm sm:text-base text-[#a8aeaf] leading-relaxed font-normal">
-            A reliable partner for real estate sales teams — ensuring more closed deals, streamlined pipelines, and zero missed follow-ups.
+            A reliable partner for real estate sales teams, ensuring more closed deals, streamlined pipelines, and zero missed follow-ups.
           </p>
 
           {/* Value cards */}
@@ -222,7 +193,7 @@ export default function LoginPage() {
           <div className="space-y-4">
             <div className="text-left space-y-1.5">
               <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                {mode === 'signin' ? 'Sign In to EstateFlow' : 'Create an Account'}
+                {mode === 'signin' ? 'Sign In to NestCRM' : 'Create an Account'}
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground">
                 {mode === 'signin'
@@ -267,7 +238,7 @@ export default function LoginPage() {
               <form onSubmit={handleSignInSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="signin-email" className="text-xs font-medium text-foreground">
-                    Email Address
+                    Work Email Address
                   </Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -276,7 +247,7 @@ export default function LoginPage() {
                       type="email"
                       value={signInEmail}
                       onChange={(e) => setSignInEmail(e.target.value)}
-                      placeholder="name@realstate.com"
+                      placeholder="e.g. sarah@nestcrm.com"
                       className="pl-9 h-10 text-sm bg-card rounded-xl border-border"
                       required
                     />
@@ -296,8 +267,9 @@ export default function LoginPage() {
                       type={showSignInPassword ? 'text' : 'password'}
                       value={signInPassword}
                       onChange={(e) => setSignInPassword(e.target.value)}
-                      placeholder="Enter your password"
+                      placeholder="Enter your account password"
                       className="pl-9 pr-10 h-10 text-sm bg-card rounded-xl border-border"
+                      required
                     />
                     <button
                       type="button"
@@ -320,90 +292,6 @@ export default function LoginPage() {
                   <ArrowRight className="h-4 w-4 ml-auto" />
                 </Button>
               </form>
-
-              {/* Team Fast-Select Divider */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-3 text-muted-foreground font-semibold tracking-wider text-[10px]">
-                    Or quick-switch team member
-                  </span>
-                </div>
-              </div>
-
-              {/* One-Click Role Selector */}
-              <div className="space-y-2">
-                <div className="grid gap-2">
-                  {profiles.slice(0, 3).map((p) => {
-                    const isSelected = selectedProfileId === p.id;
-                    return (
-                      <div
-                        key={p.id}
-                        onClick={() => handleQuickSelect(p)}
-                        className={`
-                          group relative flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer
-                          ${
-                            isSelected
-                              ? 'border-primary bg-primary/5 shadow-xs ring-1 ring-primary/20'
-                              : 'border-border/80 bg-card hover:border-primary/40 hover:bg-muted/40'
-                          }
-                        `}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div
-                            className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 border ${
-                              isSelected
-                                ? 'bg-primary text-primary-foreground border-primary'
-                                : 'bg-muted text-foreground border-border'
-                            }`}
-                          >
-                            {p.role === 'admin' ? (
-                              <Shield className="h-4 w-4" />
-                            ) : (
-                              <UserCheck className="h-4 w-4" />
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold text-foreground truncate flex items-center gap-1.5">
-                              {p.full_name}
-                              {isSelected && <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />}
-                            </div>
-                            <div className="text-[11px] text-muted-foreground truncate">{p.email}</div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <Badge
-                            variant="outline"
-                            className={`text-[9px] uppercase font-bold tracking-wider ${
-                              p.role === 'admin'
-                                ? 'border-[#3b4876]/40 text-[#3b4876] dark:text-[#f1f3f4] bg-[#3b4876]/10'
-                                : 'border-[#a8aeaf]/40 text-[#091a2b] dark:text-[#f1f3f4] bg-muted'
-                            }`}
-                          >
-                            {p.role === 'admin' ? 'Admin' : 'Sales Rep'}
-                          </Badge>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={isSelected ? 'default' : 'secondary'}
-                            disabled={loading}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              void handleRoleSignIn(p.id);
-                            }}
-                            className="h-7 px-2.5 text-[11px] rounded-lg shadow-none"
-                          >
-                            Sign In
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
           ) : (
             /* ===================== SIGN UP VIEW ===================== */

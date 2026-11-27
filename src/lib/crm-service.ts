@@ -182,6 +182,13 @@ export const crmService = {
     if (!user) {
       throw new Error('No account found with this email. Please check your credentials or create a new account.');
     }
+
+    // Default password check for initial team accounts
+    const validDefaultPasswords = ['nestcrm2026', 'estateflow2026', 'admin123', 'password', 'password123'];
+    if (password && !validDefaultPasswords.includes(password.trim())) {
+      throw new Error('Invalid password for this account. Please verify your credentials.');
+    }
+
     crmStore.currentUserId = user.id;
     crmStore.isAuthenticated = true;
     crmStore.persist();

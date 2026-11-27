@@ -8,10 +8,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# EstateFlow CRM Developer Agent Guidelines
+# NestCRM Developer Agent Guidelines
 
 ## Project Context
-- **Name:** EstateFlow CRM
+- **Name:** NestCRM
 - **Repository:** https://github.com/SyedZayan/real-estate-crm
 - **Stack:** Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS v4, Base UI, Supabase.
 

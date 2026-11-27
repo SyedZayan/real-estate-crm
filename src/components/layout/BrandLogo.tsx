@@ -57,7 +57,7 @@ export function BrandLogo({
                 lightText ? 'text-[#f1f3f4]' : 'text-foreground'
               }`}
             >
-              EstateFlow
+              NestCRM
             </span>
           </div>
           <span

@@ -69,7 +69,7 @@ export function Navbar() {
               <Building2 className="h-5 w-5" />
             </div>
             <div className="flex flex-col leading-none">
-              <span className="text-lg font-extrabold text-foreground">EstateFlow</span>
+              <span className="text-lg font-extrabold text-foreground">NestCRM</span>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Enterprise CRM</span>
             </div>
           </Link>

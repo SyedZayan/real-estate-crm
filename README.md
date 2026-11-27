@@ -1,4 +1,4 @@
-# EstateFlow — Enterprise Real Estate CRM
+# NestCRM — Enterprise Real Estate CRM
 
 > **“Close more. Manage less. Your deals, perfectly organized.”**
 
@@ -11,6 +11,20 @@ Built with **Next.js (App Router, Turbopack, TypeScript)**, **Tailwind CSS v4**,
 ## Repository
 * **GitHub Repository:** [https://github.com/SyedZayan/real-estate-crm](https://github.com/SyedZayan/real-estate-crm)
 * **Deployment Target:** [Vercel](https://vercel.com)
+
+---
+
+## Default Team Accounts
+
+Share these credentials with your team for immediate evaluation and access:
+
+| Role | Name | Email (Username) | Default Password |
+| :--- | :--- | :--- | :--- |
+| **Sales Director (Admin)** | Sarah Connor | `admin@realstate.com` | `nestcrm2026` |
+| **Sales Representative** | John Doe | `john.doe@realstate.com` | `nestcrm2026` |
+| **Sales Representative** | Rachel Green | `rachel.green@realstate.com` | `nestcrm2026` |
+
+*New team members can also click **Sign Up** on `/login` to create their own accounts.*
 
 ---
 
